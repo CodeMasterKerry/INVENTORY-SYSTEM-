@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MANAGER
+  SALES_OFFICER
+}
+
+enum SaleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  salesCreated  Sale[]    @relation("SaleCreatedBy")
+  salesApproved Sale[]    @relation("SaleApprovedBy")
+  products      Product[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id            Int                    @id @default(autoincrement())
+  name          String
+  sku           String                 @unique
+  costPrice     Decimal                @db.Decimal(10, 2)
+  sellingPrice  Decimal                @db.Decimal(10, 2)
+  quantity      Int                    @default(0)
+  lowStockLevel Int                    @default(5)
+  isApproved    Boolean                @default(false)
+  createdAt     DateTime               @default(now())
+  categoryId    Int
+  category      Category               @relation(fields: [categoryId], references: [id])
+  createdById   Int?
+  createdBy     User?                  @relation(fields: [createdById], references: [id])
+  saleItems     SaleItem[]
+  movements     InventoryTransaction[]
+}
+
+model Sale {
+  id           Int                   @id @default(autoincrement())
+  invoiceNo    String                @unique
+  status       SaleStatus            @default(PENDING)
+  totalAmount  Decimal               @db.Decimal(10, 2)
+  createdAt    DateTime              @default(now())
+  approvedAt   DateTime?
+  createdById  Int
+  createdBy    User                  @relation("SaleCreatedBy", fields: [createdById], references: [id])
+  approvedById Int?
+  approvedBy   User?                 @relation("SaleApprovedBy", fields: [approvedById], references: [id])
+  items        SaleItem[]
+  financial    FinancialTransaction?
+}
+
+model SaleItem {
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  sale      Sale    @relation(fields: [saleId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model InventoryTransaction {
+  id        Int          @id @default(autoincrement())
+  productId Int
+  type      MovementType
+  quantity  Int
+  reason    String
+  createdAt DateTime     @default(now())
+  product   Product      @relation(fields: [productId], references: [id])
+}
+
+model FinancialTransaction {
+  id        Int      @id @default(autoincrement())
+  saleId    Int      @unique
+  amount    Decimal  @db.Decimal(10, 2)
+  type      String   @default("INCOME")
+  createdAt DateTime @default(now())
+  sale      Sale     @relation(fields: [saleId], references: [id])
+}
