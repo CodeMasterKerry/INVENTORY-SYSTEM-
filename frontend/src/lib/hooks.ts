@@ -1,14 +1,12 @@
 "use client";
+import { useSyncExternalStore } from "react";
 
-import { useEffect, useState } from "react";
-
-export function useDebouncedValue<T>(value: T, delay = 300): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => setDebouncedValue(value), delay);
-    return () => window.clearTimeout(timeoutId);
-  }, [delay, value]);
-
-  return debouncedValue;
+// True only after the component mounted in the browser.
+// Prevents server/browser mismatches when reading the saved login.
+export function useMounted() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 }

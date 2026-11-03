@@ -1,18 +1,51 @@
-import type { ReactNode } from "react";
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function Dropdown({
-  label,
+  trigger,
   children,
+  align = "right",
+  width = "w-64",
+  closeOnSelect = true,
 }: {
-  label: string;
-  children: ReactNode;
+  trigger: React.ReactNode;
+  children: React.ReactNode;
+  align?: "left" | "right";
+  width?: string;
+  closeOnSelect?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
   return (
-    <details className="relative">
-      <summary className="cursor-pointer list-none">{label}</summary>
-      <div className="absolute right-0 z-20 mt-2 min-w-40 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
-        {children}
-      </div>
-    </details>
+    <div ref={ref} className="relative">
+      <div onClick={() => setOpen((o) => !o)}>{trigger}</div>
+      {open && (
+        <div
+          onClick={() => closeOnSelect && setOpen(false)}
+          className={cn(
+            "absolute z-40 mt-2 animate-fade-up overflow-hidden rounded-lg border border-line bg-white shadow-pop",
+            align === "right" ? "right-0" : "left-0",
+            width
+          )}
+        >
+          {children}
+        </div>
+      )}
+    </div>
   );
 }

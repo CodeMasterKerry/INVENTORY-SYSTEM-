@@ -1,33 +1,49 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
+import { useAuthStore } from "@/store/auth-store";
+
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
 
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
+  status: number;
+  constructor(status: number, message: string) {
     super(message);
-    this.name = "ApiError";
+    this.status = status;
   }
 }
 
-export async function apiRequest<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...init?.headers,
-    },
-  });
+type Options = {
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+  body?: unknown;
+  auth?: boolean;
+};
 
-  if (!response.ok) {
-    const message = await response.text();
-    throw new ApiError(message || response.statusText, response.status);
+export async function api<T>(
+  path: string,
+  { method = "GET", body, auth = true }: Options = {}
+): Promise<T> {
+  const token = useAuthStore.getState().token;
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(auth && token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError(0, "Cannot reach the server. Is the backend running?");
   }
 
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (res.status === 401 && auth) {
+      useAuthStore.getState().logout();
+    }
+    throw new ApiError(res.status, data?.error ?? "Request failed");
+  }
+  return data as T;
 }

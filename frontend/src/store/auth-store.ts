@@ -1,16 +1,22 @@
 import { create } from "zustand";
-import type { User } from "../types";
+import { persist } from "zustand/middleware";
+import type { User } from "@/types";
 
-type AuthState = {
-  user: User | null;
+interface AuthState {
   token: string | null;
-  setSession: (user: User, token: string) => void;
-  clearSession: () => void;
-};
+  user: User | null;
+  setSession: (token: string, user: User) => void;
+  logout: () => void;
+}
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
-  setSession: (user, token) => set({ user, token }),
-  clearSession: () => set({ user: null, token: null }),
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      token: null,
+      user: null,
+      setSession: (token, user) => set({ token, user }),
+      logout: () => set({ token: null, user: null }),
+    }),
+    { name: "esims-auth" }
+  )
+);

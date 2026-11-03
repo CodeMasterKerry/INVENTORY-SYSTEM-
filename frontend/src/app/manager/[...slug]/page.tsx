@@ -1,5 +1,5 @@
-import { ComingSoon } from "../../../components/shared/coming-soon";
+import { ComingSoon } from "@/components/shared/coming-soon";
 
-export default function ManagerSectionPage() {
-  return <ComingSoon title="Manager section" />;
+export default function Page() {
+  return <ComingSoon />;
 }
