@@ -3,6 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const routes = require("./routes");
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is required. Add it to backend/.env before starting the backend.");
+}
+
 const app = express();
 
 app.use(cors());           // lets the frontend (port 3000) talk to this server
