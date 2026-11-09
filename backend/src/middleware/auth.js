@@ -14,6 +14,9 @@ const authenticate = asyncHandler(async (req, res, next) => {
   } catch {
     throw httpError(401, "Invalid or expired token");
   }
+  if (!payload || !Number.isSafeInteger(payload.id) || payload.id < 1) {
+    throw httpError(401, "Invalid or expired token");
+  }
 
   const user = await prisma.user.findUnique({ where: { id: payload.id } });
   if (!user || !user.isActive) throw httpError(401, "Account not available");

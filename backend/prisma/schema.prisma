@@ -25,9 +25,26 @@ enum SaleStatus {
   REJECTED
 }
 
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MOBILE
+}
+
 enum MovementType {
   IN
   OUT
+}
+
+enum AvatarShape {
+  CIRCLE
+  RECTANGLE
+}
+
+enum ProductUpdateRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model User {
@@ -36,17 +53,28 @@ model User {
   email         String    @unique
   password      String
   role          Role
+  avatarUrl     String?   @db.Text
+  avatarShape   AvatarShape @default(CIRCLE)
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   salesCreated  Sale[]    @relation("SaleCreatedBy")
   salesApproved Sale[]    @relation("SaleApprovedBy")
   products      Product[]
+  rejectedProducts Product[] @relation("ProductRejectedBy")
+  inventoryTransactions InventoryTransaction[] @relation("InventoryTransactionCreatedBy")
+  rejectedSales Sale[] @relation("SaleRejectedBy")
+  notificationPreferences Json @default("{\"pendingSales\":true,\"productRequests\":true,\"lowStock\":true,\"rejectedSales\":true}") @db.JsonB
+  businessSettingsUpdates BusinessSettings[] @relation("BusinessSettingsUpdatedBy")
+  expensesCreated Expense[] @relation("ExpenseCreatedBy")
+  productUpdateRequests ProductUpdateRequest[] @relation("ProductUpdateRequestedBy")
+  productUpdateReviews ProductUpdateRequest[] @relation("ProductUpdateReviewedBy")
 }
 
 model Category {
   id       Int       @id @default(autoincrement())
   name     String    @unique
   products Product[]
+  productUpdateRequests ProductUpdateRequest[]
 }
 
 model Product {
@@ -59,12 +87,45 @@ model Product {
   lowStockLevel Int                    @default(5)
   isApproved    Boolean                @default(false)
   createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @default(now()) @updatedAt
+  description   String?
+  unit          String?
+  rejectedAt    DateTime?
+  rejectionReason String?
   categoryId    Int
   category      Category               @relation(fields: [categoryId], references: [id])
   createdById   Int?
   createdBy     User?                  @relation(fields: [createdById], references: [id])
+  rejectedById  Int?
+  rejectedBy    User?                  @relation("ProductRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
   saleItems     SaleItem[]
   movements     InventoryTransaction[]
+  updateRequests ProductUpdateRequest[]
+}
+
+model ProductUpdateRequest {
+  id                      Int                         @id @default(autoincrement())
+  productId               Int
+  requestedById           Int
+  status                  ProductUpdateRequestStatus  @default(PENDING)
+  proposedName            String                      @db.VarChar(160)
+  proposedCostPrice       Decimal                     @db.Decimal(10, 2)
+  proposedSellingPrice    Decimal                     @db.Decimal(10, 2)
+  proposedLowStockLevel   Int
+  proposedCategoryId      Int
+  proposedDescription     String?                     @db.Text
+  proposedUnit            String?                     @db.VarChar(40)
+  createdAt               DateTime                    @default(now())
+  reviewedAt              DateTime?
+  reviewedById            Int?
+  rejectionReason         String?                     @db.VarChar(1000)
+  product                 Product                     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  requestedBy             User                        @relation("ProductUpdateRequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
+  reviewedBy              User?                       @relation("ProductUpdateReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  proposedCategory        Category                    @relation(fields: [proposedCategoryId], references: [id])
+
+  @@index([status, createdAt, id])
+  @@index([productId, status])
 }
 
 model Sale {
@@ -72,12 +133,23 @@ model Sale {
   invoiceNo    String                @unique
   status       SaleStatus            @default(PENDING)
   totalAmount  Decimal               @db.Decimal(10, 2)
+  subtotalAmount Decimal             @default(0) @db.Decimal(10, 2)
+  discountPercent Decimal             @default(0) @db.Decimal(5, 2)
+  discountAmount Decimal              @default(0) @db.Decimal(10, 2)
+  taxRate       Decimal               @default(0) @db.Decimal(5, 2)
+  taxAmount     Decimal               @default(0) @db.Decimal(10, 2)
   createdAt    DateTime              @default(now())
   approvedAt   DateTime?
   createdById  Int
   createdBy    User                  @relation("SaleCreatedBy", fields: [createdById], references: [id])
   approvedById Int?
   approvedBy   User?                 @relation("SaleApprovedBy", fields: [approvedById], references: [id])
+  paymentMethod PaymentMethod?
+  notes         String?
+  rejectedAt    DateTime?
+  rejectionReason String?
+  rejectedById  Int?
+  rejectedBy    User?                 @relation("SaleRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
   items        SaleItem[]
   financial    FinancialTransaction?
 }
@@ -88,6 +160,7 @@ model SaleItem {
   productId Int
   quantity  Int
   unitPrice Decimal @db.Decimal(10, 2)
+  unitCost  Decimal? @db.Decimal(10, 2)
   sale      Sale    @relation(fields: [saleId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
 }
@@ -99,7 +172,13 @@ model InventoryTransaction {
   quantity  Int
   reason    String
   createdAt DateTime     @default(now())
+  createdById Int?
+  quantityBefore Int?
+  quantityAfter Int?
   product   Product      @relation(fields: [productId], references: [id])
+  createdBy User?        @relation("InventoryTransactionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([createdAt, id])
 }
 
 model FinancialTransaction {
@@ -109,4 +188,28 @@ model FinancialTransaction {
   type      String   @default("INCOME")
   createdAt DateTime @default(now())
   sale      Sale     @relation(fields: [saleId], references: [id])
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  category    String   @db.VarChar(80)
+  description String   @db.VarChar(500)
+  amount      Decimal  @db.Decimal(10, 2)
+  expenseDate DateTime @default(now()) @db.Date
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  createdById Int?
+  createdBy   User?    @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([expenseDate, id])
+}
+
+model BusinessSettings {
+  id                   Int      @id @default(1)
+  businessName         String   @default("E-SIMS")
+  taxRate              Decimal  @default(15) @db.Decimal(5, 2)
+  defaultLowStockLevel Int      @default(5)
+  updatedAt            DateTime @default(now()) @updatedAt
+  updatedById          Int?
+  updatedBy            User?    @relation("BusinessSettingsUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 }

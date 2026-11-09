@@ -4,13 +4,13 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
-  const managerPass = await bcrypt.hash("manager123", 10);
-  const officerPass = await bcrypt.hash("officer123", 10);
+  const managerPass = await bcrypt.hash("xxxxxx", 10);
+  const officerPass = await bcrypt.hash("xxxxxx", 10);
 
   await prisma.user.upsert({
-    where: { email: "manager@esims.com" },
+    where: { email: "xxxxx@esims.com" },
     update: {},
-    create: { name: "Main Manager", email: "manager@esims.com", password: managerPass, role: "MANAGER" },
+    create: { name: "Main Manager", email: "xxxxx@esims.com", password: managerPass, role: "MANAGER" },
   });
   await prisma.user.upsert({
     where: { email: "officer@esims.com" },

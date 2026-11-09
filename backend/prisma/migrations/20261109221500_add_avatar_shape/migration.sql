@@ -1,0 +1,4 @@
+CREATE TYPE "AvatarShape" AS ENUM ('CIRCLE', 'RECTANGLE');
+
+ALTER TABLE "User"
+  ADD COLUMN "avatarShape" "AvatarShape" NOT NULL DEFAULT 'CIRCLE';

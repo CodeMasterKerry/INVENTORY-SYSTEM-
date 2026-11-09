@@ -1,3 +1,5 @@
+const crypto = require("node:crypto");
+
 // Wraps async functions so errors go to the error handler automatically
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
@@ -9,11 +11,20 @@ const httpError = (status, message) => {
   return err;
 };
 
-// Invoice number like INV-20261031-4821
 const makeInvoiceNo = () => {
   const d = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const r = Math.floor(1000 + Math.random() * 9000);
+  const r = crypto.randomBytes(5).toString("hex").toUpperCase();
   return `INV-${d}-${r}`;
 };
 
-module.exports = { asyncHandler, httpError, makeInvoiceNo };
+async function withSerializationRetry(operation, retries = 3) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (error.code !== "P2034" || attempt >= retries) throw error;
+    }
+  }
+}
+
+module.exports = { asyncHandler, httpError, makeInvoiceNo, withSerializationRetry };

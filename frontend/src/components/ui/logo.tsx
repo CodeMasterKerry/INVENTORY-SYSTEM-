@@ -11,12 +11,12 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ light = false, showText = true }: { light?: boolean; showText?: boolean }) {
+export function Logo({ light = false, showText = true, showMark = false }: { light?: boolean; showText?: boolean; showMark?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <LogoMark />
+      {showMark && <LogoMark />}
       {showText && (
-        <span className={cn("text-[15px] font-semibold tracking-tight", light ? "text-white" : "text-slate-900")}>
+        <span className={cn("text-[21px] font-bold tracking-[0.08em]", light ? "text-white" : "text-brand-600")}>
           E-SIMS
         </span>
       )}

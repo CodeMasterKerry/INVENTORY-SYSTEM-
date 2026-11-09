@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardCheck, Eye, EyeOff, History, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import { useMounted } from "@/lib/hooks";
@@ -12,17 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
 import { toast } from "@/components/ui/toast";
 
-const points = [
-  { icon: ShieldCheck, title: "Role-based access", text: "Managers and sales officers each get a portal built for their work." },
-  { icon: ClipboardCheck, title: "Prepare and approve", text: "Every sale is reviewed before stock moves or revenue is recorded." },
-  { icon: History, title: "Complete audit trail", text: "Each stock movement is logged, so nothing changes without a record." },
-];
-
 export default function LoginPage() {
   const router = useRouter();
   const mounted = useMounted();
   const { token, user, setSession } = useAuthStore();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -36,7 +29,7 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!email || !password) return setError("Enter your email and password.");
+    if (!email || !password) return setError("Enter your email address and password.");
     setLoading(true);
     try {
       const res = await api<LoginResponse>("/auth/login", {
@@ -55,88 +48,61 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
-      <div
-        className="relative hidden flex-col justify-between overflow-hidden bg-navy-950 p-12 lg:flex"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
-        }}
-      >
-        <Logo light />
-        <div className="max-w-md">
-          <h1 className="text-[34px] font-semibold leading-[1.15] tracking-tight text-white">
-            Inventory and sales, under control.
-          </h1>
-          <p className="mt-4 text-[15px] leading-relaxed text-slate-400">
-            One system for stock, sales approvals and financial reporting, with accountability built into every step.
-          </p>
-          <ul className="mt-10 space-y-6">
-            {points.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex gap-4">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/[0.07] text-brand-300">
-                  <Icon className="size-[18px]" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-white">{title}</p>
-                  <p className="mt-0.5 text-[13px] text-slate-400">{text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="text-xs text-slate-500">© {mounted && new Date().getFullYear()} E-SIMS</p>
-      </div>
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-[radial-gradient(ellipse_at_50%_30%,#ffffff_0%,#f4f8ff_58%,#fffaf3_100%)] px-5 py-10">
+      <header className="mb-10 text-center">
+        <div className="flex justify-center"><Logo /></div>
+        <p className="mt-3 font-serif text-base text-slate-600">Smart Inventory &amp; Sale Management System</p>
+      </header>
 
-      <div className="flex items-center justify-center bg-white px-6 py-12">
-        <div className="w-full max-w-sm animate-fade-up">
-          <div className="mb-10 lg:hidden">
-            <Logo />
-          </div>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Sign in</h2>
-          <p className="mt-1.5 text-sm text-slate-500">Use the account provided by your manager.</p>
-
-          <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <Input
-              label="Password"
-              name="password"
-              type={show ? "text" : "password"}
-              autoComplete="current-password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              trailing={
-                <button
-                  type="button"
-                  onClick={() => setShow((s) => !s)}
-                  className="rounded p-1 text-slate-400 hover:text-slate-600"
-                  aria-label={show ? "Hide password" : "Show password"}
-                >
-                  {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              }
-            />
-            {error && (
-              <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700">
-                {error}
-              </p>
-            )}
-            <Button type="submit" size="lg" className="w-full" loading={loading}>
-              Sign in
-            </Button>
-          </form>
+      <section className="w-full max-w-[572px] rounded-[18px] border border-white bg-white px-6 py-7 shadow-[0_16px_40px_rgba(39,77,122,0.14)] sm:px-8 sm:py-7">
+        <div className="text-center">
+          <h1 className="font-serif text-[30px] font-bold leading-tight text-slate-950">Welcome Back</h1>
+          <p className="mt-3 font-serif text-base text-slate-500">Enter your credentials to access your account</p>
         </div>
-      </div>
-    </div>
+
+        <form onSubmit={onSubmit} className="mt-6 space-y-5" noValidate>
+          <Input
+            label="Email address"
+            name="email"
+            type="text"
+            autoComplete="username"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Input
+            label="Password"
+            name="password"
+            type={show ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShow((visible) => !visible)}
+                className="rounded p-1 text-slate-400 hover:text-slate-600"
+                aria-label={show ? "Hide password" : "Show password"}
+              >
+                {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            }
+          />
+          {error && (
+            <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-[13px] text-red-700">
+              {error}
+            </p>
+          )}
+          <Button type="submit" size="lg" className="h-14 w-full rounded-lg font-serif text-base" loading={loading}>
+            Sign In
+          </Button>
+        </form>
+      </section>
+
+      <p className="mt-10 text-center font-serif text-sm text-slate-500">
+        © 2026 E-SIMS · Smart Inventory Management
+      </p>
+    </main>
   );
 }

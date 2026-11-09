@@ -7,12 +7,14 @@ export function Dropdown({
   children,
   align = "right",
   width = "w-64",
+  side = "bottom",
   closeOnSelect = true,
 }: {
   trigger: React.ReactNode;
   children: React.ReactNode;
   align?: "left" | "right";
   width?: string;
+  side?: "top" | "bottom";
   closeOnSelect?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -38,7 +40,8 @@ export function Dropdown({
         <div
           onClick={() => closeOnSelect && setOpen(false)}
           className={cn(
-            "absolute z-40 mt-2 animate-fade-up overflow-hidden rounded-lg border border-line bg-white shadow-pop",
+            "absolute z-40 animate-fade-up overflow-hidden rounded-lg border border-line bg-white shadow-pop",
+            side === "top" ? "bottom-full mb-2" : "top-full mt-2",
             align === "right" ? "right-0" : "left-0",
             width
           )}

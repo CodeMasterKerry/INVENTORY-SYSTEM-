@@ -39,12 +39,12 @@ export function AppShell({
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-canvas">
-      <Sidebar nav={nav} portalLabel={portalLabel} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar role={role} portalLabel={portalLabel.split(" ")[0]} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1400px] animate-fade-in p-4 sm:p-6 lg:p-8">{children}</div>
+    <div className="flex h-dvh flex-col overflow-hidden bg-canvas">
+      <Topbar role={role} portalLabel={portalLabel} />
+      <div className="flex min-h-0 flex-1">
+        <Sidebar nav={nav} portalLabel={portalLabel} />
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1440px] animate-fade-in px-4 py-5 sm:px-6 sm:py-7 xl:px-8">{children}</div>
         </main>
       </div>
     </div>

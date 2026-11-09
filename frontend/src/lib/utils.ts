@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { Money, Role } from "@/types";
+import type { Money, PaymentMethod, Role } from "@/types";
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
@@ -18,6 +18,13 @@ export function formatCurrency(v: Money | null | undefined) {
 
 export const formatNumber = (v: Money | null | undefined) =>
   new Intl.NumberFormat("en-US").format(toNumber(v));
+
+export function formatPaymentMethod(method: PaymentMethod | null | undefined) {
+  if (method === "CASH") return "Cash";
+  if (method === "BANK_TRANSFER") return "Bank Transfer";
+  if (method === "MOBILE") return "Mobile";
+  return "Not recorded";
+}
 
 export function formatDate(d: string | Date | null | undefined, withTime = false) {
   if (!d) return "—";
